@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <title>विभाजन पश्चात हिस्सों का पुनर्गठन</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    input[type="text"], input[type="number"] {
+      width: 80px;
+    }
+    .btn {
+      padding: 8px 16px;
+      margin-right: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background-color: #007bff;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .result {
+      margin-top: 20px;
+      background: white;
+      padding: 16px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<h2>विभाजन पश्चात हिस्सों का पुनर्गठन</h2>
+
+<table id="fractionTable">
+  <thead>
+    <tr>
+      <th>हटाएँ?</th>
+      <th>अंश (Numerator)</th>
+      <th>हर (Denominator)</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody">
+    <tr>
+      <td><input type="checkbox" /></td>
+      <td><input type="number" value="1" /></td>
+      <td><input type="number" value="2" /></td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" /></td>
+      <td><input type="number" value="1" /></td>
+      <td><input type="number" value="12" /></td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" /></td>
+      <td><input type="number" value="1" /></td>
+      <td><input type="number" value="12" /></td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" /></td>
+      <td><input type="number" value="1" /></td>
+      <td><input type="number" value="6" /></td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" /></td>
+      <td><input type="number" value="1" /></td>
+      <td><input type="number" value="6" /></td>
+    </tr>
+  </tbody>
+</table>
+
+<button class="btn-secondary btn" onclick="addRow()">नई पंक्ति जोड़ें</button>
+<button class="btn" onclick="calculate()">गणना करें</button>
+
+<div id="output" class="result"></div>
+
+<script>
+  function gcd(a, b) {
+    return b == 0 ? a : gcd(b, a % b);
+  }
+
+  function lcm(a, b) {
+    return (a * b) / gcd(a, b);
+  }
+
+  function simplify(n, d) {
+    let g = gcd(n, d);
+    return [n / g, d / g];
+  }
+
+  function addRow() {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="checkbox" /></td>
+      <td><input type="number" /></td>
+      <td><input type="number" /></td>
+    `;
+    document.getElementById('tableBody').appendChild(row);
+  }
+
+  function calculate() {
+    const rows = document.querySelectorAll("#tableBody tr");
+    let numerators = [], denominators = [];
+
+    rows.forEach(row => {
+      const exclude = row.cells[0].children[0].checked;
+      const num = parseInt(row.cells[1].children[0].value);
+      const den = parseInt(row.cells[2].children[0].value);
+      if (!exclude && !isNaN(num) && !isNaN(den) && den !== 0) {
+        numerators.push(num);
+        denominators.push(den);
+      }
+    });
+
+    if (numerators.length === 0) {
+      document.getElementById('output').innerHTML = "कोई मान्य भिन्न नहीं दिया गया।";
+      return;
+    }
+
+    let commonDen = denominators.reduce((a, b) => lcm(a, b), 1);
+    let adjusted = numerators.map((n, i) => n * (commonDen / denominators[i]));
+    let total = adjusted.reduce((a, b) => a + b, 0);
+    let [totalSimpNum, totalSimpDen] = simplify(total, commonDen);
+
+    let html = `<strong>पुनर्निधारित भिन्न:</strong><br><table><tr><th>मूल भिन्न</th><th>पुनर्निधारित</th><th>सरल रूप</th><th>दशमलव</th></tr>`;
+    rows.forEach((row, i) => {
+      const exclude = row.cells[0].children[0].checked;
+      const num = parseInt(row.cells[1].children[0].value);
+      const den = parseInt(row.cells[2].children[0].value);
+      if (!exclude && !isNaN(num) && !isNaN(den) && den !== 0) {
+        const adj = num * (commonDen / den);
+        const [snum, sden] = simplify(adj, total);
+        html += `<tr><td>${num}/${den}</td><td>${adj}/${commonDen}</td><td>${snum}/${sden}</td><td>${(snum/sden).toFixed(4)}</td></tr>`;
+      }
+    });
+    html += `</table><br><strong>पुनर्निधारित योग = ${totalSimpNum}/${totalSimpDen}</strong>`;
+    document.getElementById('output').innerHTML = html;
+  }
+</script>
+
+</body>
+</html>
